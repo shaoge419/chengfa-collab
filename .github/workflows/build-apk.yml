@@ -18,12 +18,30 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-      # 调试包：无需签名，可直接安装到手机做内部测试
+      - name: Point Gradle at the SDK
+        run: echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+
+      - name: Install Android SDK packages
+        run: sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+
+      # 仓库不提交二进制 wrapper jar，这里在云端下载 Gradle 并生成
+      - name: Download Gradle 8.9 distribution
+        run: |
+          curl -L -o gradle.zip https://services.gradle.org/distributions/gradle-8.9-bin.zip
+          unzip -q gradle.zip
+          echo "GRADLE_BIN=$PWD/gradle-8.9/bin/gradle" >> "$GITHUB_ENV"
+
+      - name: Generate Gradle wrapper (jar is not committed to repo)
+        run: $GRADLE_BIN wrapper --gradle-version 8.9
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
       - name: Build debug APK
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug --no-daemon
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
@@ -31,8 +49,8 @@ jobs:
           name: chengfa-collab-debug-apk
           path: app/build/outputs/apk/debug/*.apk
 
-      # 正式包（签名）：在仓库 Settings → Secrets 配置 KEYSTORE_BASE64 / KEY_ALIAS /
-      # KEYSTORE_PASSWORD / KEY_PASSWORD 后取消下面 job 的注释
+      # 正式签名版：在仓库 Settings → Secrets 配置 KEYSTORE_BASE64 / KEY_ALIAS /
+      # KEYSTORE_PASSWORD / KEY_PASSWORD 后，取消下面 job 的注释即可。
       # release:
       #   needs: build
       #   runs-on: ubuntu-latest
@@ -42,11 +60,19 @@ jobs:
       #       with:
       #         distribution: temurin
       #         java-version: '17'
-      #     - uses: gradle/actions/setup-gradle@v4
+      #     - uses: android-actions/setup-android@v3
+      #     - run: echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+      #     - run: sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+      #     - run: |
+      #         curl -L -o gradle.zip https://services.gradle.org/distributions/gradle-8.9-bin.zip
+      #         unzip -q gradle.zip
+      #         echo "GRADLE_BIN=$PWD/gradle-8.9/bin/gradle" >> "$GITHUB_ENV"
+      #     - run: $GRADLE_BIN wrapper --gradle-version 8.9
+      #     - run: chmod +x gradlew
       #     - name: Decode keystore
       #       run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > release.keystore
       #     - name: Build signed release APK
-      #       run: ./gradlew assembleRelease
+      #       run: ./gradlew assembleRelease --no-daemon
       #       env:
       #         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
       #         KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
