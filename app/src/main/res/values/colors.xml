@@ -1,0 +1,5 @@
+<resources>
+    <!-- 品牌主色（取自网页端 primary:#5b6ef5） -->
+    <color name="brand">#5b6ef5</color>
+    <color name="brand_dark">#4654e0</color>
+</resources>

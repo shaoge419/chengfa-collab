@@ -1,0 +1,7 @@
+<resources>
+    <!-- 桌面显示名称 -->
+    <string name="app_name">城发协同</string>
+
+    <!-- 后台地址：暂用公网 IP。后续上域名 / HTTPS 只改这里一处即可 -->
+    <string name="app_url">http://106.52.72.40/</string>
+</resources>

@@ -1,0 +1,57 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:        # 在 Actions 页面手动点一下即可出包
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # 调试包：无需签名，可直接安装到手机做内部测试
+      - name: Build debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: chengfa-collab-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+
+      # 正式包（签名）：在仓库 Settings → Secrets 配置 KEYSTORE_BASE64 / KEY_ALIAS /
+      # KEYSTORE_PASSWORD / KEY_PASSWORD 后取消下面 job 的注释
+      # release:
+      #   needs: build
+      #   runs-on: ubuntu-latest
+      #   steps:
+      #     - uses: actions/checkout@v4
+      #     - uses: actions/setup-java@v4
+      #       with:
+      #         distribution: temurin
+      #         java-version: '17'
+      #     - uses: gradle/actions/setup-gradle@v4
+      #     - name: Decode keystore
+      #       run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > release.keystore
+      #     - name: Build signed release APK
+      #       run: ./gradlew assembleRelease
+      #       env:
+      #         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      #         KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      #         KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      #     - uses: actions/upload-artifact@v4
+      #       with:
+      #         name: chengfa-collab-release-apk
+      #         path: app/build/outputs/apk/release/*.apk

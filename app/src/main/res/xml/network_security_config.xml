@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- 允许 http(明文) 访问，因当前后台为 http:// 公网 IP；
+         后续切到 https 域名后可将 cleartextTrafficPermitted 改为 false -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
